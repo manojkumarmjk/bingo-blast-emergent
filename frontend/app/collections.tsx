@@ -6,6 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenBg from '../src/ScreenBg';
 import { colors, gradients, radius, shadows, spacing, type } from '../src/theme';
+import { LoadingState } from '../src/StateViews';
 import { api, storage } from '../src/api';
 
 export default function Collections() {
@@ -26,7 +27,7 @@ export default function Collections() {
     catch (e: any) { Alert.alert('Oops', e.message); }
   };
 
-  if (!data) return <ScreenBg><SafeAreaView /></ScreenBg>;
+  if (!data) return <ScreenBg><SafeAreaView style={{ flex: 1 }}><LoadingState message="Loading collection..." /></SafeAreaView></ScreenBg>;
   const set = data.set;
 
   return (

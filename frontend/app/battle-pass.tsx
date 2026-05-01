@@ -6,6 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenBg from '../src/ScreenBg';
 import { colors, gradients, radius, shadows, spacing, type } from '../src/theme';
+import { LoadingState } from '../src/StateViews';
 import { api, storage } from '../src/api';
 
 export default function BattlePass() {
@@ -34,7 +35,7 @@ export default function BattlePass() {
     ]);
   };
 
-  if (!bp) return <ScreenBg><SafeAreaView /></ScreenBg>;
+  if (!bp) return <ScreenBg><SafeAreaView style={{ flex: 1 }}><LoadingState message="Loading battle pass..." /></SafeAreaView></ScreenBg>;
 
   const xp = bp.xp || 0;
   const currentTier = bp.tiers.findIndex((t: any) => xp < t.xp_required);

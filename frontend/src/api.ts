@@ -60,6 +60,32 @@ export const api = {
   collectionClaim: (userId: string) => request(`/collection/claim?user_id=${userId}`, { method: 'POST' }),
   streak: (userId: string) => request(`/streak/${userId}`),
   currentEvent: () => request('/event/current'),
+  // Matchmaking
+  matchmakingJoin: (userId: string) =>
+    request(`/matchmaking/join?user_id=${userId}`, { method: 'POST' }),
+  matchmakingStatus: (entryId: string) => request(`/matchmaking/status/${entryId}`),
+  matchmakingCancel: (entryId: string) =>
+    request(`/matchmaking/cancel/${entryId}`, { method: 'POST' }),
+  // VIP
+  vipInfo: (userId: string) => request(`/vip/info/${userId}`),
+  vipActivate: (userId: string, planId: string) =>
+    request(`/vip/activate?user_id=${userId}&plan_id=${planId}`, { method: 'POST' }),
+  // Cosmetics
+  cosmetics: (userId: string) => request(`/cosmetics/${userId}`),
+  cosmeticsEquip: (userId: string, category: string, itemId: string) =>
+    request(`/cosmetics/equip?user_id=${userId}&category=${category}&item_id=${itemId}`, { method: 'POST' }),
+  // Guilds
+  guildList: () => request('/guilds/list'),
+  guildDetail: (guildId: string) => request(`/guilds/${guildId}`),
+  guildCreate: (userId: string, name: string, tag: string) =>
+    request(`/guilds/create?user_id=${userId}&name=${encodeURIComponent(name)}&tag=${encodeURIComponent(tag)}`, { method: 'POST' }),
+  guildJoin: (userId: string, codeOrId: string) =>
+    request(`/guilds/join?user_id=${userId}&code_or_id=${codeOrId}`, { method: 'POST' }),
+  guildLeave: (userId: string) =>
+    request(`/guilds/leave?user_id=${userId}`, { method: 'POST' }),
+  // Push
+  pushRegister: (userId: string, token: string, platform = 'expo') =>
+    request(`/push/register?user_id=${userId}&token=${encodeURIComponent(token)}&platform=${platform}`, { method: 'POST' }),
   leaderboard: (period = 'all') => request(`/leaderboard?period=${period}`),
   tournaments: () => request('/tournaments'),
   registerTournament: (userId: string, tournamentId: string) =>

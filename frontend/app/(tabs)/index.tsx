@@ -66,7 +66,7 @@ export default function Home() {
           <Text style={styles.sectionTitle}>Play Now</Text>
           <View style={styles.grid}>
             <ModeCard testID="play-computer-btn" label="Computer" sub="vs Bot • Solo" icon="robot" grad={gradients.secondary} onPress={() => router.push({ pathname: '/game', params: { mode: 'computer' } })} />
-            <ModeCard testID="play-multiplayer-btn" label="Classic" sub="Multiplayer • Free" icon="account-group" grad={gradients.primary} onPress={() => router.push('/(tabs)/rooms')} />
+            <ModeCard testID="play-multiplayer-btn" label="Classic" sub="Quick Match • Online" icon="account-group" grad={gradients.primary} onPress={() => router.push('/matchmaking')} />
             <ModeCard testID="play-free-btn" label="Free Room" sub="Quick • No Cost" icon="gift-outline" grad={gradients.free} onPress={() => router.push({ pathname: '/(tabs)/rooms', params: { filter: 'free' } })} />
             <ModeCard testID="play-paid-btn" label="Paid Room" sub="Prestige • ₹25+" icon="diamond-stone" grad={gradients.prestige} onPress={() => router.push({ pathname: '/(tabs)/rooms', params: { filter: 'paid' } })} />
           </View>

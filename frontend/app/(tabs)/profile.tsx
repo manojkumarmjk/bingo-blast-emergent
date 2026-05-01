@@ -7,6 +7,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenBg from '../../src/ScreenBg';
 import HeaderBar from '../../src/HeaderBar';
 import { colors, gradients, radius, shadows, spacing, type } from '../../src/theme';
+import { LoadingState } from '../../src/StateViews';
 import { api, storage } from '../../src/api';
 
 export default function Profile() {
@@ -36,7 +37,7 @@ export default function Profile() {
     ]);
   };
 
-  if (!user) return <ScreenBg><SafeAreaView /></ScreenBg>;
+  if (!user) return <ScreenBg><SafeAreaView style={{ flex: 1 }}><LoadingState message="Loading profile..." /></SafeAreaView></ScreenBg>;
   const unlocked = achievements.filter((a) => a.unlocked).length;
 
   return (
@@ -90,6 +91,9 @@ export default function Profile() {
 
           {/* Menu */}
           <View style={styles.menu}>
+            <MenuItem icon="crown" label="VIP Membership" onPress={() => router.push('/vip')} />
+            <MenuItem icon="palette" label="Customize Avatar" onPress={() => router.push('/avatar-customize')} />
+            <MenuItem icon="shield-account" label="Guilds" onPress={() => router.push('/guilds')} />
             <MenuItem icon="wallet" label="Wallet" onPress={() => router.push('/wallet')} />
             <MenuItem icon="trophy-award" label="Tournaments" onPress={() => router.push('/tournaments')} />
             <MenuItem icon="ferris-wheel" label="Daily Spin" onPress={() => router.push('/spin-wheel')} />

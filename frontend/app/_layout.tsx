@@ -29,6 +29,10 @@ export default function RootLayout() {
         <Stack.Screen name="battle-pass" />
         <Stack.Screen name="collections" />
         <Stack.Screen name="streak" />
+        <Stack.Screen name="matchmaking" options={{ animation: 'fade' }} />
+        <Stack.Screen name="vip" />
+        <Stack.Screen name="avatar-customize" />
+        <Stack.Screen name="guilds" />
       </Stack>
     </SafeAreaProvider>
   );

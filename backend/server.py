@@ -206,8 +206,13 @@ def _default_user_extras() -> dict:
         "bp_xp": 0, "bp_premium": False, "bp_claimed": {"free": [], "premium": []},
         "missions": {}, "missions_date": None,
         "collection": [],
-        "powerups": {"dauber": 2, "reveal": 2, "double": 1},  # starter
+        "powerups": {"dauber": 2, "reveal": 2, "double": 1},
         "stats": {"dabs": 0, "speed_dabs": 0, "bot_wins": 0, "spins": 0, "dailies": 0},
+        "vip_active": False, "vip_expires_at": None,
+        "equipped": {"frame": "frame_default", "title": None, "background": "bg_default"},
+        "owned_cosmetics": ["frame_default", "bg_default"],
+        "guild_id": None,
+        "push_token": None,
     }
 
 async def _ensure_extras(user: dict) -> dict:
@@ -968,6 +973,285 @@ async def _auto_caller(room_id: str):
             await manager.broadcast(room_id, {"type": "number_called", "number": nxt, "called_numbers": called})
     except asyncio.CancelledError:
         pass
+
+
+# ---------------------- Matchmaking (Classic Quick Match) ----------------------
+matchmaking_queue: Dict[str, dict] = {}  # entry_id -> {user_id, created_at, room_id}
+MATCHMAKING_BOT_TIMEOUT_SECONDS = 15
+
+
+@api_router.post("/matchmaking/join")
+async def matchmaking_join(user_id: str):
+    user = await db.users.find_one({"id": user_id})
+    if not user: raise HTTPException(404, "User not found")
+    # Cleanup stale entries (> 60s)
+    now = now_utc()
+    for eid in list(matchmaking_queue.keys()):
+        c = matchmaking_queue[eid].get("created_at")
+        if c and (now - c).total_seconds() > 60:
+            del matchmaking_queue[eid]
+    # Already queued/matched?
+    for eid, e in matchmaking_queue.items():
+        if e["user_id"] == user_id:
+            if e.get("room_id"):
+                return {"status": "matched", "room_id": e["room_id"], "entry_id": eid}
+            return {"status": "queued", "entry_id": eid, "wait_seconds": int((now - e["created_at"]).total_seconds())}
+    # Find a waiting partner
+    waiting = [(eid, e) for eid, e in matchmaking_queue.items() if not e.get("room_id") and e["user_id"] != user_id]
+    if waiting:
+        partner_eid, partner = waiting[0]
+        # Create a hidden classic 1v1 room
+        room = {
+            "id": str(uuid.uuid4()), "code": str(uuid.uuid4()).split("-")[0].upper(),
+            "name": "Classic Quick Match", "room_type": "free",
+            "max_players": 2, "match_count": 1,
+            "entry_fee": 0, "prize": 200, "host_id": partner["user_id"],
+            "players": [], "status": "waiting", "called_numbers": [], "cards": {},
+            "winner_id": None, "is_private": True, "is_matchmaking": True,
+            "created_at": now,
+        }
+        # Add both players
+        partner_user = await db.users.find_one({"id": partner["user_id"]})
+        room["players"] = [
+            {"user_id": partner["user_id"], "username": partner_user["username"], "avatar": partner_user["avatar"], "ready": True, "is_host": True},
+            {"user_id": user_id, "username": user["username"], "avatar": user["avatar"], "ready": True, "is_host": False},
+        ]
+        # Generate cards immediately, mark playing
+        room["cards"] = {p["user_id"]: generate_card() for p in room["players"]}
+        room["status"] = "playing"; room["started_at"] = now
+        await db.rooms.insert_one(room)
+        # Update partner's queue entry
+        matchmaking_queue[partner_eid]["room_id"] = room["id"]
+        # Add self to queue with room_id
+        my_eid = str(uuid.uuid4())
+        matchmaking_queue[my_eid] = {"user_id": user_id, "created_at": now, "room_id": room["id"]}
+        # Auto-caller
+        asyncio.create_task(_auto_caller(room["id"]))
+        return {"status": "matched", "room_id": room["id"], "entry_id": my_eid, "match_type": "player"}
+    # No partner — add to queue
+    eid = str(uuid.uuid4())
+    matchmaking_queue[eid] = {"user_id": user_id, "created_at": now}
+    return {"status": "queued", "entry_id": eid, "wait_seconds": 0}
+
+
+@api_router.get("/matchmaking/status/{entry_id}")
+async def matchmaking_status(entry_id: str):
+    e = matchmaking_queue.get(entry_id)
+    if not e:
+        return {"status": "expired"}
+    if e.get("room_id"):
+        return {"status": "matched", "room_id": e["room_id"], "match_type": "player"}
+    waited = int((now_utc() - e["created_at"]).total_seconds())
+    if waited >= MATCHMAKING_BOT_TIMEOUT_SECONDS:
+        # Bot fallback — frontend will redirect to computer mode
+        del matchmaking_queue[entry_id]
+        return {"status": "matched", "match_type": "bot", "wait_seconds": waited}
+    return {"status": "queued", "wait_seconds": waited, "bot_fallback_in": MATCHMAKING_BOT_TIMEOUT_SECONDS - waited}
+
+
+@api_router.post("/matchmaking/cancel/{entry_id}")
+async def matchmaking_cancel(entry_id: str):
+    matchmaking_queue.pop(entry_id, None)
+    return {"ok": True}
+
+
+# ---------------------- VIP Subscription ----------------------
+VIP_PLANS = [
+    {"id": "vip_monthly", "name": "VIP Monthly", "price_inr": 199, "days": 30},
+    {"id": "vip_yearly", "name": "VIP Yearly", "price_inr": 1799, "days": 365, "badge": "BEST VALUE"},
+]
+VIP_PERKS = [
+    {"icon": "currency-rupee", "title": "2x Daily Rewards", "desc": "Double your daily login bonus"},
+    {"icon": "trending-up", "title": "2x Battle Pass XP", "desc": "Climb tiers twice as fast"},
+    {"icon": "crown", "title": "VIP Avatar Frame", "desc": "Show off the exclusive gold frame"},
+    {"icon": "ad", "title": "No Ads", "desc": "Uninterrupted gameplay"},
+    {"icon": "ticket", "title": "Free Daily Spin", "desc": "Bonus spin every day"},
+    {"icon": "headphones", "title": "Priority Support", "desc": "Skip the queue"},
+]
+
+
+@api_router.get("/vip/info/{user_id}")
+async def vip_info(user_id: str):
+    user = await db.users.find_one({"id": user_id})
+    if not user: raise HTTPException(404, "User not found")
+    user = await _ensure_extras(user)
+    expires_at = user.get("vip_expires_at")
+    active = False
+    days_left = 0
+    if expires_at:
+        if isinstance(expires_at, str):
+            try: expires_at = datetime.fromisoformat(expires_at)
+            except Exception: expires_at = None
+        if isinstance(expires_at, datetime):
+            if expires_at.tzinfo is None: expires_at = expires_at.replace(tzinfo=timezone.utc)
+            active = expires_at > now_utc()
+            days_left = max(0, (expires_at - now_utc()).days)
+    return {"active": active, "days_left": days_left, "expires_at": iso(expires_at) if isinstance(expires_at, datetime) else None,
+            "plans": VIP_PLANS, "perks": VIP_PERKS}
+
+
+@api_router.post("/vip/activate")
+async def vip_activate(user_id: str, plan_id: str):
+    """Mock activation — in production gate behind Razorpay successful payment."""
+    plan = next((p for p in VIP_PLANS if p["id"] == plan_id), None)
+    if not plan: raise HTTPException(404, "Plan not found")
+    expires = now_utc() + timedelta(days=plan["days"])
+    await db.users.update_one({"id": user_id}, {"$set": {"vip_active": True, "vip_expires_at": expires}})
+    await db.transactions.insert_one({"id": str(uuid.uuid4()), "user_id": user_id, "type": "vip_activate_mock",
+                                       "amount": 0, "description": f"VIP: {plan['name']} (mock)", "created_at": now_utc()})
+    return {"ok": True, "expires_at": iso(expires), "days": plan["days"]}
+
+
+# ---------------------- Avatar Customization ----------------------
+COSMETICS = {
+    "frames": [
+        {"id": "frame_default", "name": "Classic", "rarity": "common", "color": "#F72585", "unlock": "default"},
+        {"id": "frame_gold", "name": "Gold", "rarity": "rare", "color": "#FFD166", "unlock": "level_5"},
+        {"id": "frame_neon", "name": "Neon Pulse", "rarity": "epic", "color": "#06D6A0", "unlock": "wins_10"},
+        {"id": "frame_royal", "name": "Royal", "rarity": "epic", "color": "#9D4EDD", "unlock": "level_10"},
+        {"id": "frame_vip", "name": "VIP Crown", "rarity": "legendary", "color": "#FCA311", "unlock": "vip"},
+        {"id": "frame_champion", "name": "Champion", "rarity": "legendary", "color": "#EF476F", "unlock": "wins_50"},
+    ],
+    "titles": [
+        {"id": "title_newbie", "name": "Newbie", "unlock": "default"},
+        {"id": "title_lucky", "name": "Lucky", "unlock": "wins_5"},
+        {"id": "title_speedster", "name": "Speedster", "unlock": "speed_dabs_50"},
+        {"id": "title_streak_king", "name": "Streak King", "unlock": "streak_5"},
+        {"id": "title_legend", "name": "Bingo Legend", "unlock": "wins_50"},
+        {"id": "title_vip", "name": "VIP Member", "unlock": "vip"},
+    ],
+    "backgrounds": [
+        {"id": "bg_default", "name": "Midnight", "rarity": "common", "color": "#1A0B2E", "unlock": "default"},
+        {"id": "bg_neon", "name": "Neon City", "rarity": "rare", "color": "#7209B7", "unlock": "level_5"},
+        {"id": "bg_sunset", "name": "Sunset", "rarity": "rare", "color": "#FCA311", "unlock": "wins_25"},
+        {"id": "bg_ocean", "name": "Deep Ocean", "rarity": "epic", "color": "#4361EE", "unlock": "level_15"},
+    ],
+}
+
+
+def _meets_cosmetic_unlock(user: dict, unlock: str) -> bool:
+    if unlock == "default": return True
+    if unlock == "vip": return bool(user.get("vip_active"))
+    if unlock.startswith("level_"): return user.get("level", 1) >= int(unlock.split("_")[1])
+    if unlock.startswith("wins_"): return user.get("wins", 0) >= int(unlock.split("_")[1])
+    if unlock.startswith("streak_"): return user.get("streak", 0) >= int(unlock.split("_")[1])
+    if unlock.startswith("speed_dabs_"):
+        return (user.get("stats", {}) or {}).get("speed_dabs", 0) >= int(unlock.split("_")[2])
+    return False
+
+
+@api_router.get("/cosmetics/{user_id}")
+async def cosmetics(user_id: str):
+    user = await db.users.find_one({"id": user_id})
+    if not user: raise HTTPException(404, "User not found")
+    user = await _ensure_extras(user)
+    owned = set(user.get("owned_cosmetics", []))
+    out = {}
+    for category, items in COSMETICS.items():
+        out[category] = []
+        for item in items:
+            unlocked = _meets_cosmetic_unlock(user, item.get("unlock", "default")) or item["id"] in owned
+            out[category].append({**item, "unlocked": unlocked, "owned": item["id"] in owned or unlocked})
+    return {"cosmetics": out, "equipped": user.get("equipped", {})}
+
+
+@api_router.post("/cosmetics/equip")
+async def cosmetics_equip(user_id: str, category: str, item_id: str):
+    if category not in COSMETICS: raise HTTPException(400, "Invalid category")
+    item = next((i for i in COSMETICS[category] if i["id"] == item_id), None)
+    if not item: raise HTTPException(404, "Item not found")
+    user = await db.users.find_one({"id": user_id})
+    if not user: raise HTTPException(404, "User not found")
+    user = await _ensure_extras(user)
+    if not _meets_cosmetic_unlock(user, item.get("unlock", "default")) and item_id not in user.get("owned_cosmetics", []):
+        raise HTTPException(400, "Cosmetic locked")
+    equipped = user.get("equipped", {}) or {}
+    key = "frame" if category == "frames" else "title" if category == "titles" else "background"
+    equipped[key] = item_id
+    await db.users.update_one({"id": user_id}, {"$set": {"equipped": equipped}})
+    return {"ok": True, "equipped": equipped}
+
+
+# ---------------------- Guilds ----------------------
+GUILD_CREATE_COST = 1000
+
+
+@api_router.post("/guilds/create")
+async def guild_create(user_id: str, name: str, tag: str):
+    user = await db.users.find_one({"id": user_id})
+    if not user: raise HTTPException(404, "User not found")
+    user = await _ensure_extras(user)
+    if user.get("guild_id"): raise HTTPException(400, "Already in a guild")
+    if user.get("bcoins", 0) < GUILD_CREATE_COST:
+        raise HTTPException(400, f"Need {GUILD_CREATE_COST} BC to create a guild")
+    guild = {
+        "id": str(uuid.uuid4()), "name": name[:30], "tag": tag[:5].upper(),
+        "code": str(uuid.uuid4()).split("-")[0].upper(),
+        "leader_id": user_id, "members": [user_id], "max_members": 20,
+        "weekly_points": 0, "total_points": 0, "level": 1,
+        "created_at": now_utc(),
+    }
+    await db.guilds.insert_one(guild)
+    await db.users.update_one({"id": user_id}, {"$set": {"guild_id": guild["id"]},
+                                                 "$inc": {"bcoins": -GUILD_CREATE_COST}})
+    return strip_mongo(guild)
+
+
+@api_router.get("/guilds/list")
+async def guilds_list():
+    gs = await db.guilds.find({}).sort("weekly_points", -1).limit(50).to_list(50)
+    return [strip_mongo(g) for g in gs]
+
+
+@api_router.get("/guilds/{guild_id}")
+async def guild_detail(guild_id: str):
+    g = await db.guilds.find_one({"id": guild_id})
+    if not g: raise HTTPException(404, "Guild not found")
+    members = []
+    async for m in db.users.find({"id": {"$in": g.get("members", [])}}):
+        members.append({"user_id": m["id"], "username": m["username"], "avatar": m["avatar"],
+                         "level": m.get("level", 1), "wins": m.get("wins", 0),
+                         "is_leader": m["id"] == g["leader_id"]})
+    return {**strip_mongo(g), "member_details": members}
+
+
+@api_router.post("/guilds/join")
+async def guild_join(user_id: str, code_or_id: str):
+    user = await db.users.find_one({"id": user_id})
+    if not user: raise HTTPException(404, "User not found")
+    user = await _ensure_extras(user)
+    if user.get("guild_id"): raise HTTPException(400, "Already in a guild")
+    g = await db.guilds.find_one({"code": code_or_id.upper()}) or await db.guilds.find_one({"id": code_or_id})
+    if not g: raise HTTPException(404, "Guild not found")
+    if len(g.get("members", [])) >= g.get("max_members", 20):
+        raise HTTPException(400, "Guild is full")
+    await db.guilds.update_one({"id": g["id"]}, {"$addToSet": {"members": user_id}})
+    await db.users.update_one({"id": user_id}, {"$set": {"guild_id": g["id"]}})
+    return strip_mongo(g)
+
+
+@api_router.post("/guilds/leave")
+async def guild_leave(user_id: str):
+    user = await db.users.find_one({"id": user_id})
+    if not user or not user.get("guild_id"): raise HTTPException(400, "Not in a guild")
+    gid = user["guild_id"]
+    await db.guilds.update_one({"id": gid}, {"$pull": {"members": user_id}})
+    await db.users.update_one({"id": user_id}, {"$set": {"guild_id": None}})
+    # If leader left, promote first remaining member
+    g = await db.guilds.find_one({"id": gid})
+    if g and g.get("leader_id") == user_id and g.get("members"):
+        await db.guilds.update_one({"id": gid}, {"$set": {"leader_id": g["members"][0]}})
+    elif g and not g.get("members"):
+        await db.guilds.delete_one({"id": gid})
+    return {"ok": True}
+
+
+# ---------------------- Push token registration (scaffold) ----------------------
+@api_router.post("/push/register")
+async def push_register(user_id: str, token: str, platform: str = "expo"):
+    """Stores Expo Push token for future delivery (delivery requires native build)."""
+    await db.users.update_one({"id": user_id}, {"$set": {"push_token": token, "push_platform": platform}})
+    return {"ok": True}
 
 
 # ---------------------- Wiring ----------------------

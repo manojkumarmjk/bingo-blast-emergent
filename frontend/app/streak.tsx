@@ -7,6 +7,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenBg from '../src/ScreenBg';
 import GradientButton from '../src/GradientButton';
 import { colors, gradients, radius, shadows, spacing, type } from '../src/theme';
+import { LoadingState } from '../src/StateViews';
 import { api, storage } from '../src/api';
 
 export default function StreakCalendar() {
@@ -27,7 +28,7 @@ export default function StreakCalendar() {
     catch (e: any) { Alert.alert('Oops', e.message); }
   };
 
-  if (!info) return <ScreenBg><SafeAreaView /></ScreenBg>;
+  if (!info) return <ScreenBg><SafeAreaView style={{ flex: 1 }}><LoadingState message="Loading streak..." /></SafeAreaView></ScreenBg>;
   const streakDays = info.streak_days || 0;
   const canClaim = !info.last_daily_claim || (Date.now() - new Date(info.last_daily_claim).getTime() > 20 * 3600 * 1000);
 
