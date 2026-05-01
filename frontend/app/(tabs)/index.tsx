@@ -73,6 +73,13 @@ export default function Home() {
 
           {/* Quick Actions */}
           <View style={styles.quickRow}>
+            <QuickAction label="Missions" icon="flag-checkered" onPress={() => router.push('/missions')} testID="quick-missions" />
+            <QuickAction label="Streak" icon="fire" onPress={() => router.push('/streak')} testID="quick-streak" />
+            <QuickAction label="Battle Pass" icon="crown" onPress={() => router.push('/battle-pass')} testID="quick-bp" />
+            <QuickAction label="Collection" icon="cards" onPress={() => router.push('/collections')} testID="quick-collection" />
+          </View>
+
+          <View style={styles.quickRow}>
             <QuickAction label="Spin Wheel" icon="ferris-wheel" onPress={() => router.push('/spin-wheel')} testID="quick-spin" />
             <QuickAction label="Tournaments" icon="trophy" onPress={() => router.push('/tournaments')} testID="quick-tournaments" />
             <QuickAction label="Friends" icon="account-multiple" onPress={() => router.push('/friends')} testID="quick-friends" />

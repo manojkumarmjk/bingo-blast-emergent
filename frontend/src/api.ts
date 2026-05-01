@@ -38,12 +38,28 @@ export const api = {
   getRoom: (id: string) => request(`/rooms/${id}`),
   joinRoom: (id: string, userId: string) =>
     request(`/rooms/${id}/join`, { method: 'POST', body: JSON.stringify({ user_id: userId }) }),
-  createComputerMatch: (userId: string, difficulty = 'medium') =>
-    request('/computer-match', { method: 'POST', body: JSON.stringify({ user_id: userId, difficulty }) }),
+  createComputerMatch: (userId: string, difficulty = 'medium', numCards = 1) =>
+    request('/computer-match', { method: 'POST', body: JSON.stringify({ user_id: userId, difficulty, num_cards: numCards }) }),
   callNumber: (matchId: string) =>
     request('/computer-match/call', { method: 'POST', body: JSON.stringify({ match_id: matchId }) }),
-  claimBingo: (matchId: string, userId: string) =>
-    request('/computer-match/claim-bingo', { method: 'POST', body: JSON.stringify({ match_id: matchId, user_id: userId }) }),
+  dabNumber: (matchId: string, userId: string, number: number, speedBonus: boolean) =>
+    request('/computer-match/dab', { method: 'POST', body: JSON.stringify({ match_id: matchId, user_id: userId, number, speed_bonus: speedBonus }) }),
+  usePowerup: (matchId: string, userId: string, powerupId: string) =>
+    request(`/computer-match/use-powerup?match_id=${matchId}&user_id=${userId}&powerup_id=${powerupId}`, { method: 'POST' }),
+  claimBingo: (matchId: string, userId: string, dabbedNumbers: number[] = [], cardIndex = 0) =>
+    request('/computer-match/claim-bingo', { method: 'POST', body: JSON.stringify({ match_id: matchId, user_id: userId, dabbed_numbers: dabbedNumbers, card_index: cardIndex }) }),
+  missions: (userId: string) => request(`/missions/${userId}`),
+  claimMission: (userId: string, missionId: string) =>
+    request('/missions/claim', { method: 'POST', body: JSON.stringify({ user_id: userId, mission_id: missionId }) }),
+  battlePass: (userId: string) => request(`/battle-pass/${userId}`),
+  bpClaim: (userId: string, tier: number, track: 'free' | 'premium') =>
+    request('/battle-pass/claim', { method: 'POST', body: JSON.stringify({ user_id: userId, tier, track }) }),
+  bpActivatePremium: (userId: string) =>
+    request(`/battle-pass/activate-premium?user_id=${userId}`, { method: 'POST' }),
+  collection: (userId: string) => request(`/collection/${userId}`),
+  collectionClaim: (userId: string) => request(`/collection/claim?user_id=${userId}`, { method: 'POST' }),
+  streak: (userId: string) => request(`/streak/${userId}`),
+  currentEvent: () => request('/event/current'),
   leaderboard: (period = 'all') => request(`/leaderboard?period=${period}`),
   tournaments: () => request('/tournaments'),
   registerTournament: (userId: string, tournamentId: string) =>

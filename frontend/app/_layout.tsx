@@ -25,6 +25,10 @@ export default function RootLayout() {
         <Stack.Screen name="friends" />
         <Stack.Screen name="settings" />
         <Stack.Screen name="error-state" />
+        <Stack.Screen name="missions" />
+        <Stack.Screen name="battle-pass" />
+        <Stack.Screen name="collections" />
+        <Stack.Screen name="streak" />
       </Stack>
     </SafeAreaProvider>
   );

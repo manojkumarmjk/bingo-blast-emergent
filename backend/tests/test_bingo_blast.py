@@ -112,13 +112,17 @@ class TestRooms:
 class TestComputerMatch:
     def test_create_match(self, api_client, base_url, guest_user):
         r = api_client.post(f"{base_url}/api/computer-match",
-                            json={"user_id": guest_user["id"], "difficulty": "easy"})
+                            json={"user_id": guest_user["id"], "difficulty": "easy", "num_cards": 2})
         assert r.status_code == 200
         d = r.json()
-        assert len(d["user_card"]) == 5 and len(d["user_card"][0]) == 5
-        assert d["user_card"][2][2] is None  # FREE
+        assert "user_cards" in d and len(d["user_cards"]) == 2
+        for card in d["user_cards"]:
+            assert len(card) == 5 and len(card[0]) == 5
+            assert card[2][2] is None
         assert d["bot_card"][2][2] is None
         pytest.match_id = d["id"]
+        pytest.match_cards = d["user_cards"]
+        pytest.match_called = d["called_numbers"]
 
     def test_call_number(self, api_client, base_url):
         r = api_client.post(f"{base_url}/api/computer-match/call",

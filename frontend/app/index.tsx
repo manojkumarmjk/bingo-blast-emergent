@@ -40,6 +40,15 @@ export default function Splash() {
       }
     };
     boot();
+    // Safety: never hang on splash more than 6s
+    const safety = setTimeout(async () => {
+      const onboarded = await storage.isOnboarded();
+      const storedUser = await storage.getUser();
+      if (!onboarded) router.replace('/onboarding');
+      else if (!storedUser) router.replace('/login');
+      else router.replace('/(tabs)');
+    }, 6000);
+    return () => clearTimeout(safety);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
