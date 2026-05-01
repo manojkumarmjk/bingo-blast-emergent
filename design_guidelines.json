@@ -1,0 +1,317 @@
+{
+  "theme_and_archetype": {
+    "archetype": "Archetype 6: Vibrant Play mixed with Premium Casino-Style",
+    "theme_mode": "dark",
+    "description": "Modern, colorful, premium gaming UI with playful Bingo energy. Uses a deep night-purple background to make bright neon gradients, gold coins, and colorful bingo balls pop. Trust cues established through high-quality 3D assets, thick pill buttons, glowing effects, and smooth rounded geometry."
+  },
+  "colors": {
+    "background": {
+      "main": "#1A0B2E",
+      "surface": "#2B1A4A",
+      "surface_highlight": "#3E2966",
+      "modal_overlay": "rgba(10, 4, 18, 0.85)"
+    },
+    "brand": {
+      "primary": "#F72585",
+      "primary_gradient": ["#F72585", "#B5179E"],
+      "secondary": "#4CC9F0",
+      "secondary_gradient": ["#4CC9F0", "#4895EF"],
+      "accent_gold": "#FFD166",
+      "accent_gold_gradient": ["#FFD166", "#FCA311"]
+    },
+    "text": {
+      "primary": "#FFFFFF",
+      "secondary": "#A393C4",
+      "disabled": "#635682",
+      "on_primary": "#FFFFFF",
+      "on_gold": "#4A3000"
+    },
+    "bingo_columns": {
+      "B": "#FF3366",
+      "I": "#FFD166",
+      "N": "#06D6A0",
+      "G": "#4CC9F0",
+      "O": "#9D4EDD"
+    },
+    "status": {
+      "success": "#06D6A0",
+      "warning": "#FFD166",
+      "error": "#EF476F",
+      "info": "#4CC9F0"
+    },
+    "room_tiers": {
+      "free": ["#4CC9F0", "#4895EF"],
+      "paid_prestige": ["#7209B7", "#4361EE"],
+      "paid_luxury": ["#FFD166", "#FCA311"],
+      "tournament": ["#F72585", "#7209B7"]
+    }
+  },
+  "typography": {
+    "font_family": {
+      "heading": "Nunito",
+      "body": "Nunito",
+      "mono": "SpaceMono"
+    },
+    "scale": {
+      "h1": { "fontSize": 40, "fontWeight": "900", "letterSpacing": 1, "lineHeight": 48 },
+      "h2": { "fontSize": 32, "fontWeight": "800", "letterSpacing": 0.5, "lineHeight": 40 },
+      "h3": { "fontSize": 24, "fontWeight": "800", "letterSpacing": 0, "lineHeight": 32 },
+      "title": { "fontSize": 20, "fontWeight": "700", "lineHeight": 28 },
+      "body_large": { "fontSize": 18, "fontWeight": "600", "lineHeight": 26 },
+      "body": { "fontSize": 16, "fontWeight": "600", "lineHeight": 24 },
+      "caption": { "fontSize": 14, "fontWeight": "500", "lineHeight": 20 },
+      "badge": { "fontSize": 11, "fontWeight": "800", "letterSpacing": 1, "textTransform": "uppercase" }
+    }
+  },
+  "spacing": {
+    "xs": 4,
+    "sm": 8,
+    "md": 16,
+    "lg": 24,
+    "xl": 32,
+    "2xl": 48,
+    "3xl": 64
+  },
+  "shadows": {
+    "sm": {
+      "shadowColor": "#000000",
+      "shadowOffset": { "width": 0, "height": 2 },
+      "shadowOpacity": 0.3,
+      "shadowRadius": 4,
+      "elevation": 3
+    },
+    "md": {
+      "shadowColor": "#000000",
+      "shadowOffset": { "width": 0, "height": 6 },
+      "shadowOpacity": 0.4,
+      "shadowRadius": 8,
+      "elevation": 6
+    },
+    "glow_primary": {
+      "shadowColor": "#F72585",
+      "shadowOffset": { "width": 0, "height": 4 },
+      "shadowOpacity": 0.6,
+      "shadowRadius": 12,
+      "elevation": 10
+    },
+    "glow_gold": {
+      "shadowColor": "#FFD166",
+      "shadowOffset": { "width": 0, "height": 4 },
+      "shadowOpacity": 0.6,
+      "shadowRadius": 12,
+      "elevation": 10
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": {
+        "borderRadius": 999,
+        "paddingVertical": 16,
+        "paddingHorizontal": 32,
+        "alignItems": "center",
+        "justifyContent": "center",
+        "shadowType": "glow_primary",
+        "gradient": "primary_gradient",
+        "textStyle": "title",
+        "textColor": "on_primary"
+      },
+      "gold": {
+        "borderRadius": 999,
+        "paddingVertical": 16,
+        "paddingHorizontal": 32,
+        "alignItems": "center",
+        "shadowType": "glow_gold",
+        "gradient": "accent_gold_gradient",
+        "textStyle": "title",
+        "textColor": "on_gold"
+      },
+      "secondary": {
+        "borderRadius": 999,
+        "backgroundColor": "surface_highlight",
+        "paddingVertical": 12,
+        "paddingHorizontal": 24,
+        "borderWidth": 2,
+        "borderColor": "primary",
+        "textColor": "primary"
+      },
+      "icon_button": {
+        "borderRadius": 999,
+        "padding": 12,
+        "backgroundColor": "surface_highlight"
+      }
+    },
+    "cards": {
+      "base": {
+        "backgroundColor": "surface",
+        "borderRadius": 24,
+        "padding": 24,
+        "shadowType": "md",
+        "borderWidth": 1,
+        "borderColor": "rgba(255,255,255,0.05)"
+      },
+      "highlighted": {
+        "backgroundColor": "surface",
+        "borderRadius": 24,
+        "padding": 24,
+        "borderWidth": 2,
+        "borderColor": "primary"
+      }
+    },
+    "bingo_board": {
+      "grid_gap": 8,
+      "cell_radius": 12,
+      "cell_bg": "rgba(255,255,255,0.08)",
+      "cell_active_bg": "#FFFFFF",
+      "cell_active_text": "#1A0B2E",
+      "header_radius": 16
+    },
+    "bottom_nav": {
+      "backgroundColor": "surface",
+      "height": 72,
+      "borderTopWidth": 1,
+      "borderTopColor": "rgba(255,255,255,0.05)",
+      "icon_size": 28,
+      "active_tint": "#F72585",
+      "inactive_tint": "#A393C4"
+    }
+  },
+  "animations": {
+    "button_press": "scale down to 0.95 with React Native Reanimated spring config (damping: 10, stiffness: 200)",
+    "modal_enter": "slide up and fade in (duration: 300ms)",
+    "number_called": "full screen zoom in overlay with bounce effect, duration 1.5s, then shrinks into the recent numbers strip",
+    "bingo_win": "confetti explosion overlay, continuous rotation on rays behind the winner card, pulsing glow on CTA"
+  },
+  "screens": {
+    "Splash": {
+      "layout": "Full screen center content",
+      "elements": ["Logo", "Loading Indicator", "Background image (splash_bg)"],
+      "test_ids": ["splash-screen", "loading-spinner"]
+    },
+    "Onboarding": {
+      "layout": "Pagination view, center aligned image, bottom title/subtitle, bottom fixed CTA",
+      "elements": ["3D illustrations (onboarding_coins, bingo_balls_asset)", "Title", "Subtitle", "Next/Skip Buttons"],
+      "test_ids": ["onboarding-step-text", "onboarding-next-btn", "onboarding-skip-btn"]
+    },
+    "HomeDashboard": {
+      "layout": "ScrollView. Header with Profile/Wallet. Hero banner for Daily Reward. Grid of Game Modes.",
+      "elements": ["Avatar", "Bcoin Balance", "Daily Reward Card", "Play Buttons (Computer, Multiplayer, etc)", "Tournament Banner (tournament_banner)"],
+      "test_ids": ["home-dashboard", "user-avatar-btn", "wallet-balance-display", "play-multiplayer-btn", "play-computer-btn", "tournament-banner"]
+    },
+    "GameModeSelection": {
+      "layout": "List of room cards. Each card has price, max players, gradient background based on tier.",
+      "elements": ["Prestige Room (₹25)", "Luxury Room (₹150)", "Free Room", "Custom Room CTA"],
+      "test_ids": ["game-mode-screen", "room-card-prestige", "room-card-luxury", "room-card-free"]
+    },
+    "Lobby": {
+      "layout": "Sticky Header with Filters (Pills). Scrollable list of active rooms.",
+      "elements": ["Filter Tabs (Free/Paid/Friends)", "Room List Item (Creator Name, Players 10/25, Join Button)"],
+      "test_ids": ["lobby-screen", "filter-free", "filter-paid", "room-join-btn"]
+    },
+    "CreateRoom": {
+      "layout": "Form layout in a Card. Sliders/Selects for config.",
+      "elements": ["Max Players Slider", "Matches Count Select", "Entry Fee Input", "Create Button", "Share Code output"],
+      "test_ids": ["create-room-screen", "max-players-slider", "create-room-submit-btn", "invite-code-display"]
+    },
+    "WaitingRoom": {
+      "layout": "Grid of participant avatars. Header with Room Code. Footer with Ready/Start button.",
+      "elements": ["Player Avatars", "Ready Status Indicator", "Countdown Timer"],
+      "test_ids": ["waiting-room-screen", "player-avatar-grid", "ready-toggle-btn", "start-game-btn"]
+    },
+    "BingoGameScreen": {
+      "layout": "Fixed layout. Top: Recent numbers strip. Middle: 5x5 Grid. Bottom: Chat and CLAIM BINGO button.",
+      "elements": ["Number Called Animation Overlay", "5x5 Board", "B-I-N-G-O Headers", "BINGO Claim CTA (Glowing)"],
+      "test_ids": ["game-screen", "bingo-board-grid", "bingo-cell-1", "recent-numbers-strip", "claim-bingo-btn", "chat-overlay-btn"]
+    },
+    "BingoWinScreen": {
+      "layout": "Modal/Overlay. Center celebration card.",
+      "elements": ["Winner Avatar", "Bcoins Won Amount", "Play Again Button", "Home Button", "Share Button"],
+      "test_ids": ["win-screen-modal", "winner-reward-text", "play-again-btn", "back-home-btn"]
+    },
+    "Shop": {
+      "layout": "Grid of store items.",
+      "elements": ["Bcoin Packages", "Room Cards", "Limited Offers banner"],
+      "test_ids": ["shop-screen", "buy-bcoins-pkg-1", "buy-room-card"]
+    },
+    "WalletTransactions": {
+      "layout": "List view. Grouped by date.",
+      "elements": ["Transaction Item (+ Bcoins / - Bcoins)", "Current Balance Header"],
+      "test_ids": ["wallet-screen", "transaction-history-list"]
+    },
+    "DailySpinWheel": {
+      "layout": "Center aligned. Large wheel graphic. Spin button at bottom.",
+      "elements": ["Wheel component (colorful segments)", "Spin CTA", "Reward Popup Modal"],
+      "test_ids": ["spin-wheel-screen", "spin-action-btn", "reward-claim-btn"]
+    },
+    "Leaderboard": {
+      "layout": "Top 3 Podium UI at top. List view for rank 4-50 below. Sticky bottom bar for current user.",
+      "elements": ["Time Tabs (Daily/Weekly)", "Podium (1st, 2nd, 3rd with crowns)", "Rank List Item", "Current User Rank Bar"],
+      "test_ids": ["leaderboard-screen", "tab-daily", "podium-1st", "user-sticky-rank"]
+    },
+    "Tournament": {
+      "layout": "Tabs: Ongoing/Upcoming. Card list.",
+      "elements": ["Tournament Card", "Countdown Timer", "Prize Pool", "Register Button"],
+      "test_ids": ["tournament-screen", "tournament-card", "register-tournament-btn"]
+    },
+    "Profile": {
+      "layout": "Header with Avatar/Edit. Stats grid. Achievements horizontal scroll.",
+      "elements": ["Avatar", "Win Rate Stat", "Total Games Stat", "Edit Profile Button", "Badges"],
+      "test_ids": ["profile-screen", "edit-profile-btn", "stats-grid"]
+    },
+    "Achievements": {
+      "layout": "Grid of badges.",
+      "elements": ["Unlocked Badge (colored)", "Locked Badge (grayscale/opacity)", "Progress Bar"],
+      "test_ids": ["achievements-screen", "badge-item"]
+    },
+    "Friends": {
+      "layout": "List view.",
+      "elements": ["Add Friend Input", "Friend Item", "Online Status Indicator (Green dot)"],
+      "test_ids": ["friends-screen", "add-friend-input", "friend-list-item"]
+    },
+    "Settings": {
+      "layout": "List of toggles/links.",
+      "elements": ["Sound Toggle", "Vibration Toggle", "Notifications Toggle", "Logout Button"],
+      "test_ids": ["settings-screen", "sound-toggle", "logout-btn"]
+    }
+  },
+  "media": {
+    "images": {
+      "splash_bg": {
+        "url": "https://static.prod-images.emergentagent.com/jobs/ccfa2a0d-405b-4e25-af22-cc76daa2d7bb/images/248655e4bbe9ee5fa4dbd8ea78ea22f17957eb6cd682a980c3948f6f6bf41940.png",
+        "description": "Vibrant, playful abstract background using deep royal purple, magenta, and gold colors. Use for Splash screen background."
+      },
+      "onboarding_coins": {
+        "url": "https://static.prod-images.emergentagent.com/jobs/ccfa2a0d-405b-4e25-af22-cc76daa2d7bb/images/5eeed84ee6a61c77ecf261267b0ac6acfbcf81b2ff6e5a5a191f200d6d38f67d.png",
+        "description": "3D render of shiny gold game coins stacked next to a colorful treasure chest bursting open. Use for Win Rewards / Shop screens."
+      },
+      "tournament_banner": {
+        "url": "https://static.prod-images.emergentagent.com/jobs/ccfa2a0d-405b-4e25-af22-cc76daa2d7bb/images/73f2be1c64449ace55714b96eb24b9d443660141248bc0c58beae4f61ca0111a.png",
+        "description": "3D golden trophy cup with glowing neon pink and blue accents against dark purple. Use for Tournament header and Home dashboard banners."
+      },
+      "bingo_balls_asset": {
+        "url": "https://static.prod-images.emergentagent.com/jobs/ccfa2a0d-405b-4e25-af22-cc76daa2d7bb/images/535ba923989db690db0cdde59f334322d2d85ba4681761ed67386255056bda9f.png",
+        "description": "3D colorful bingo balls bouncing playfully. Use for Onboarding 'Play Bingo' and general game mode headers."
+      }
+    },
+    "avatars": [
+      {
+        "url": "https://images.unsplash.com/photo-1758600433991-933fb663161f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzV8MHwxfHNlYXJjaHwyfHxjaGVlcmZ1bCUyMHBlcnNvbiUyMHBvcnRyYWl0JTIwY29sb3JmdWwlMjBiYWNrZ3JvdW5kfGVufDB8fHx8MTc3NzYyMjkxOHww&ixlib=rb-4.1.0&q=85",
+        "description": "Smiling person avatar for mock profile/friends."
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1758600587811-e9a20851cf7d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzV8MHwxfHNlYXJjaHwxfHxjaGVlcmZ1bCUyMHBlcnNvbiUyMHBvcnRyYWl0JTIwY29sb3JmdWwlMjBiYWNrZ3JvdW5kfGVufDB8fHx8MTc3NzYyMjkxOHww&ixlib=rb-4.1.0&q=85",
+        "description": "Smiling person avatar for mock profile/friends."
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1758600433358-b44bf8a32c8f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzV8MHwxfHNlYXJjaHwzfHxjaGVlcmZ1bCUyMHBlcnNvbiUyMHBvcnRyYWl0JTIwY29sb3JmdWwlMjBiYWNrZ3JvdW5kfGVufDB8fHx8MTc3NzYyMjkxOHww&ixlib=rb-4.1.0&q=85",
+        "description": "Smiling person avatar for mock profile/friends."
+      }
+    ]
+  },
+  "instructions_to_main_agent": {
+    "icons": "Use @expo/vector-icons strictly. Do not use emojis for interactive or visual icons.",
+    "gradients": "Use expo-linear-gradient for all primary buttons, premium room cards, and the bingo ball visuals.",
+    "animations": "Use react-native-reanimated for the 'Number Called' screen overlay and button press spring scales.",
+    "testing": "All interactive buttons, inputs, and major screen containers must have the provided data-testid properties applied.",
+    "styling": "This is an Expo React Native app. Convert CSS properties into React Native StyleSheet objects. Box shadow must utilize the platform-specific properties defined in the shadows config (elevation for Android, shadow* for iOS)."
+  }
+}
