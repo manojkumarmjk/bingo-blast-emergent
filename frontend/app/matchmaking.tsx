@@ -60,7 +60,7 @@ export default function Matchmaking() {
 
   const handleMatched = (r: any) => {
     if (r.match_type === 'bot') {
-      // Auto-match with bot after 15s timeout
+      // Auto-match with bot after 60s timeout (matches backend MATCHMAKING_BOT_TIMEOUT_SECONDS)
       router.replace({ pathname: '/game', params: { mode: 'computer', numCards: '2' } });
     } else {
       // Real player match — go straight to game with the room
@@ -74,7 +74,11 @@ export default function Matchmaking() {
   };
 
   const ringStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${rotate.value}deg` }] }));
-  const remaining = Math.max(0, 15 - waitSeconds);
+  const BOT_FALLBACK_SECONDS = 60;
+  const remaining = Math.max(0, BOT_FALLBACK_SECONDS - waitSeconds);
+  const mm = Math.floor(remaining / 60);
+  const ss = remaining % 60;
+  const remainingLabel = mm > 0 ? `${mm}m ${ss}s` : `${ss}s`;
 
   return (
     <ScreenBg>
@@ -103,7 +107,7 @@ export default function Matchmaking() {
           <Text style={styles.statusLabel}>{status === 'matched' ? 'MATCH FOUND!' : 'WAITING...'}</Text>
           <Text style={styles.timer}>{waitSeconds}s</Text>
           {remaining > 0 ? (
-            <Text style={styles.fallback}>Auto-match with Bot in {remaining}s</Text>
+            <Text style={styles.fallback}>Auto-match with Bot in {remainingLabel}</Text>
           ) : (
             <Text style={[styles.fallback, { color: colors.gold }]}>Matching with Bot...</Text>
           )}

@@ -9,11 +9,13 @@ import HeaderBar from '../../src/HeaderBar';
 import { colors, gradients, radius, shadows, spacing, type } from '../../src/theme';
 import { LoadingState } from '../../src/StateViews';
 import { api, storage } from '../../src/api';
+import EditProfileModal from '../../src/EditProfileModal';
 
 export default function Profile() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [achievements, setAchievements] = useState<any[]>([]);
+  const [editVisible, setEditVisible] = useState(false);
 
   const load = useCallback(async () => {
     const stored = await storage.getUser();
@@ -47,13 +49,22 @@ export default function Profile() {
         <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
           {/* Hero */}
           <View style={styles.hero}>
-            <LinearGradient colors={gradients.primary as any} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.heroRing}>
-              <Image source={{ uri: user.avatar }} style={styles.heroAvatar} />
-            </LinearGradient>
+            <TouchableOpacity onPress={() => setEditVisible(true)} activeOpacity={0.85} testID="edit-avatar-btn">
+              <LinearGradient colors={gradients.primary as any} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.heroRing}>
+                <Image source={{ uri: user.avatar }} style={styles.heroAvatar} />
+              </LinearGradient>
+              <View style={styles.editAvatarBadge}>
+                <MaterialCommunityIcons name="pencil" size={14} color="#fff" />
+              </View>
+            </TouchableOpacity>
             <Text style={styles.username}>{user.username}</Text>
             <Text style={styles.tagline}>Level {user.level} • Friend Code: {user.friend_code || user.id?.slice(0,8).toUpperCase()}</Text>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
-              <TouchableOpacity onPress={() => router.push('/settings')} style={styles.editBtn} testID="edit-profile-btn">
+              <TouchableOpacity onPress={() => setEditVisible(true)} style={styles.editBtn} testID="edit-profile-btn">
+                <MaterialCommunityIcons name="account-edit" size={18} color={colors.text} />
+                <Text style={styles.editText}>Edit Profile</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/settings')} style={styles.editBtn}>
                 <MaterialCommunityIcons name="cog" size={18} color={colors.text} />
                 <Text style={styles.editText}>Settings</Text>
               </TouchableOpacity>
@@ -101,6 +112,12 @@ export default function Profile() {
             <MenuItem icon="logout" label="Logout" onPress={logout} danger />
           </View>
         </ScrollView>
+        <EditProfileModal
+          visible={editVisible}
+          onClose={() => setEditVisible(false)}
+          user={user}
+          onSaved={async (u) => { setUser(u); await storage.setUser(u); }}
+        />
       </SafeAreaView>
     </ScreenBg>
   );
@@ -130,6 +147,13 @@ const styles = StyleSheet.create({
   hero: { alignItems: 'center', paddingTop: spacing.md, paddingHorizontal: spacing.md },
   heroRing: { width: 120, height: 120, borderRadius: 60, alignItems: 'center', justifyContent: 'center', padding: 4 },
   heroAvatar: { width: 112, height: 112, borderRadius: 56 },
+  editAvatarBadge: {
+    position: 'absolute', right: 2, bottom: 2,
+    width: 32, height: 32, borderRadius: 16,
+    backgroundColor: colors.primary,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 3, borderColor: colors.bg,
+  },
   username: { ...type.h2, color: colors.text, marginTop: 10 },
   tagline: { ...type.caption, color: colors.textDim, marginTop: 4 },
   editBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.surface, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },

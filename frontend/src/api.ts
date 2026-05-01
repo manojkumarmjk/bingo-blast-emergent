@@ -28,6 +28,7 @@ export const api = {
   getUser: (userId: string) => request(`/user/${userId}`),
   updateUser: (payload: any) =>
     request('/user/update', { method: 'POST', body: JSON.stringify(payload) }),
+  listAvatars: () => request('/avatars/list'),
   claimDaily: (userId: string) =>
     request(`/daily-reward/claim?user_id=${userId}`, { method: 'POST' }),
   spinWheel: (userId: string) =>

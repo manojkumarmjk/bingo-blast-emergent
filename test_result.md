@@ -105,6 +105,36 @@
 user_problem_statement: "Bingo Blast — multiplayer bingo mobile app. Current iteration: (1) fix Metro 'Unable to resolve module src/StateViews' crash that blocks Profile/Streak/BattlePass/Collections screens; (2) add a backend toggle (USE_REAL_RAZORPAY) that switches between real Razorpay and mock checkout; (3) add a Razorpay config endpoint the frontend can read; (4) scaffold Expo push notifications (expo-notifications, expo-device) and call /api/push/register after login; (5) verify the new Phase-2 endpoints (/api/matchmaking, /api/vip, /api/avatars→/cosmetics, /api/guilds, /api/push/register) still work end-to-end."
 
 backend:
+  - task: "Avatar catalogue endpoint + hardened /user/update validation"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "NEW: GET /api/avatars/list returns 12 DiceBear system avatars ({id:'sys_N', url:...}). Expanded AVATARS list from 3 to 12. Hardened POST /api/user/update: username must be 2–18 chars (400 otherwise), avatar must match one of AVATARS exactly (400 otherwise), response now returns {ok, user:<fresh doc>} for optimistic UI updates. Existing fields continue to work."
+      - working: true
+        agent: "testing"
+        comment: "PASS. GET /api/avatars/list returns exactly 12 entries with ids sys_0..sys_11 and every url starts with https://api.dicebear.com/. POST /api/user/update validation: username='A' -> 400 'Username must be 2–18 characters'; 19-char username -> 400 same; arbitrary avatar URL (evil.example.com) -> 400 'Invalid avatar selection'. Valid combined update {username:'NewName12', avatar:<first dicebear URL>} -> 200 with {ok:true, user:{...}} and user.username/user.avatar reflect new values. Follow-up GET /api/user/{user_id} confirms persistence (both fields saved). /app/backend_round2_test.py 16/16 assertions for this task passed."
+
+  - task: "Matchmaking bot timeout bumped to 60s"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "MATCHMAKING_BOT_TIMEOUT_SECONDS raised from 15 → 60. GET /api/matchmaking/status/{entry_id} response now reports bot_fallback_in ≈ 60 on a freshly-joined classic queue. Frontend matchmaking.tsx updated to display 'Auto-match with Bot in 1m 0s'."
+      - working: true
+        agent: "testing"
+        comment: "PASS. POST /api/matchmaking/join?user_id=<fresh_user> -> 200 {status:'queued', entry_id, wait_seconds:0}. Immediate GET /api/matchmaking/status/{entry_id} -> 200 {status:'queued', wait_seconds:0, bot_fallback_in:60}. Regression check satisfied: bot_fallback_in is 60 (in target range 55–60), NOT the old 15s. POST /api/matchmaking/cancel/{entry_id} -> 200 cleanup succeeded. Regression sanity: GET /api/payments/razorpay/config still returns mode='mock'; POST /api/push/register returns {ok:true}; GET /api/shop/items returns 8 items. All 30/30 round-2 assertions passed."
+
   - task: "Razorpay USE_REAL_RAZORPAY toggle + /payments/razorpay/config endpoint"
     implemented: true
     working: true
@@ -190,5 +220,9 @@ test_plan:
 agent_communication:
   - agent: "main"
     message: "Please smoke-test the three backend tasks above. Use existing guest login flow (POST /api/guest/login with a device_id) to get a user_id. Razorpay must be in MOCK mode (confirm via GET /api/payments/razorpay/config -> mode='mock'). For shop purchase test: GET /api/shop/items, pick a bcoins item, POST /payments/razorpay/create-order -> expect mocked=true, then POST /payments/razorpay/verify with any fake payment_id -> expect ok=true and user bcoins incremented. For push: POST /api/push/register?user_id=...&token=ExponentPushToken[xxx]&platform=expo -> expect ok=true and push_token set on user. For Phase-2: exercise matchmaking/join (classic mode), vip/info, cosmetics/equip, guilds/create+join+leave. Do NOT test frontend — user has not approved frontend testing yet."
+  - agent: "main"
+    message: "ROUND 2 changes to verify: (1) NEW endpoint GET /api/avatars/list — should return {avatars: [{id:'sys_0', url:'https://api.dicebear.com/...'}]} with exactly 12 entries. (2) POST /api/user/update now validates: username must be 2–18 chars, avatar must be one of the 12 system avatar URLs. Response now returns {ok:true, user:<fresh user doc>}. Verify: 400 on username length < 2 or > 18; 400 on unknown avatar URL; 200 + persisted change when passing a valid dicebear URL from /api/avatars/list. (3) MATCHMAKING_BOT_TIMEOUT_SECONDS bumped from 15 → 60. Confirm GET /api/matchmaking/status/{entry_id} returns bot_fallback_in starting around 60 (not 15) for a fresh queue entry, and only falls back to bot after 60s. (4) Push/Razorpay/Phase-2 regressions — re-run the existing smoke tests to confirm they still pass."
   - agent: "testing"
     message: "Backend smoke tests COMPLETE. 24/24 assertions passed in /app/backend_test.py against the public preview URL. Razorpay mock toggle works end-to-end: config reports mode=mock, create-order returns mocked=true with order_mock_* prefix, verify grants the bcoins item (balance went from 500 -> 600 for coins_100, 500 -> 3500 for coins_3000), and a transaction row of type 'razorpay_purchase_mock' is inserted referencing item_id and payment_id. Push register persists push_token + push_platform on the user doc and returns {ok:true}. Phase-2: matchmaking join/status/cancel all 200 (note: server signature is GET /api/matchmaking/status/{entry_id} with path param, NOT ?user_id query — the review-request example for status is slightly off, but the actual implementation works correctly and the frontend already uses it). VIP info+activate (vip_monthly) toggles active=true with 29 days_left. Cosmetics equip titles=title_newbie persists in user.equipped. Guilds create (1000 BC cost), join via code, member listing, and leave all work and DB state is consistent. No bugs or regressions found. Frontend was NOT tested."
+  - agent: "testing"
+    message: "ROUND 2 smoke-tests COMPLETE. 30/30 assertions passed in /app/backend_round2_test.py. (1) Avatar catalogue: GET /api/avatars/list returns exactly 12 entries with ids sys_0..sys_11 and DiceBear URLs. /api/user/update validation works: short/long usernames and non-whitelisted avatar URLs all return 400 with clear messages; valid {username:'NewName12', avatar:<first dicebear URL>} returns 200 {ok:true, user:{...}} and the change persists (verified via GET /api/user/{id}). (2) Matchmaking bot timeout regression fixed: GET /api/matchmaking/status/{entry_id} now returns bot_fallback_in:60 on a fresh queue entry (NOT ~15). Cancel endpoint also 200. (3) Regression sanity all green: razorpay config mode='mock', push/register -> {ok:true}, shop/items returns 8 items. No bugs found."

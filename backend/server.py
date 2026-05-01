@@ -72,9 +72,19 @@ def near_bingo(card, dabbed_set):
     return near
 
 AVATARS = [
-    "https://images.unsplash.com/photo-1758600433991-933fb663161f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzV8MHwxfHNlYXJjaHwyfHxjaGVlcmZ1bCUyMHBlcnNvbiUyMHBvcnRyYWl0JTIwY29sb3JmdWwlMjBiYWNrZ3JvdW5kfGVufDB8fHx8MTc3NzYyMjkxOHww&ixlib=rb-4.1.0&q=85",
-    "https://images.unsplash.com/photo-1758600587811-e9a20851cf7d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzV8MHwxfHNlYXJjaHwxfHxjaGVlcmZ1bCUyMHBlcnNvbiUyMHBvcnRyYWl0JTIwY29sb3JmdWwlMjBiYWNrZ3JvdW5kfGVufDB8fHx8MTc3NzYyMjkxOHww&ixlib=rb-4.1.0&q=85",
-    "https://images.unsplash.com/photo-1758600433358-b44bf8a32c8f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzV8MHwxfHNlYXJjaHwzfHxjaGVlcmZ1bCUyMHBlcnNvbiUyMHBvcnRyYWl0JTIwY29sb3JmdWwlMjBiYWNrZ3JvdW5kfGVufDB8fHx8MTc3NzYyMjkxOHww&ixlib=rb-4.1.0&q=85",
+    # Vibrant DiceBear fun-emoji avatars — deterministic, free, no auth needed.
+    "https://api.dicebear.com/7.x/fun-emoji/png?seed=Ace&backgroundColor=ff2e93",
+    "https://api.dicebear.com/7.x/fun-emoji/png?seed=Blast&backgroundColor=7209b7",
+    "https://api.dicebear.com/7.x/fun-emoji/png?seed=Cherry&backgroundColor=06d6a0",
+    "https://api.dicebear.com/7.x/fun-emoji/png?seed=Dazzle&backgroundColor=4cc9f0",
+    "https://api.dicebear.com/7.x/fun-emoji/png?seed=Ember&backgroundColor=ffd166",
+    "https://api.dicebear.com/7.x/fun-emoji/png?seed=Flash&backgroundColor=ef476f",
+    "https://api.dicebear.com/7.x/fun-emoji/png?seed=Galaxy&backgroundColor=9d4edd",
+    "https://api.dicebear.com/7.x/fun-emoji/png?seed=Happy&backgroundColor=ff9f1c",
+    "https://api.dicebear.com/7.x/fun-emoji/png?seed=Indigo&backgroundColor=3a0ca3",
+    "https://api.dicebear.com/7.x/fun-emoji/png?seed=Jester&backgroundColor=f72585",
+    "https://api.dicebear.com/7.x/fun-emoji/png?seed=Kite&backgroundColor=00b4d8",
+    "https://api.dicebear.com/7.x/fun-emoji/png?seed=Lucky&backgroundColor=06d6a0",
 ]
 USERNAMES = ["BingoKing","LuckySpin","StarPlayer","NumberNinja","CardMaster","RoyalPlay","NeonDice","QuickDraw","AceChamp","BlastHero"]
 
@@ -298,12 +308,27 @@ async def get_user(user_id: str):
 @api_router.post("/user/update")
 async def update_user(req: UpdateProfileRequest):
     updates = {}
-    if req.username: updates["username"] = req.username
-    if req.avatar: updates["avatar"] = req.avatar
+    if req.username:
+        uname = req.username.strip()
+        if len(uname) < 2 or len(uname) > 18:
+            raise HTTPException(400, "Username must be 2–18 characters")
+        updates["username"] = uname
+    if req.avatar:
+        # Validate that avatar is one of the system avatars (prevents arbitrary URLs)
+        if req.avatar not in AVATARS:
+            raise HTTPException(400, "Invalid avatar selection")
+        updates["avatar"] = req.avatar
     if not updates: raise HTTPException(400, "No updates")
     res = await db.users.update_one({"id": req.user_id}, {"$set": updates})
     if res.matched_count == 0: raise HTTPException(404, "User not found")
-    return {"ok": True}
+    fresh = await db.users.find_one({"id": req.user_id}, {"_id": 0})
+    return {"ok": True, "user": fresh}
+
+
+@api_router.get("/avatars/list")
+async def avatars_list():
+    """Returns the full catalogue of pre-built system avatars users can pick from."""
+    return {"avatars": [{"id": f"sys_{i}", "url": u} for i, u in enumerate(AVATARS)]}
 
 
 @api_router.post("/daily-reward/claim")
@@ -990,7 +1015,7 @@ async def _auto_caller(room_id: str):
 
 # ---------------------- Matchmaking (Classic Quick Match) ----------------------
 matchmaking_queue: Dict[str, dict] = {}  # entry_id -> {user_id, created_at, room_id}
-MATCHMAKING_BOT_TIMEOUT_SECONDS = 15
+MATCHMAKING_BOT_TIMEOUT_SECONDS = 60
 
 
 @api_router.post("/matchmaking/join")
