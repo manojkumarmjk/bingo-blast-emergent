@@ -101,3 +101,94 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Bingo Blast — multiplayer bingo mobile app. Current iteration: (1) fix Metro 'Unable to resolve module src/StateViews' crash that blocks Profile/Streak/BattlePass/Collections screens; (2) add a backend toggle (USE_REAL_RAZORPAY) that switches between real Razorpay and mock checkout; (3) add a Razorpay config endpoint the frontend can read; (4) scaffold Expo push notifications (expo-notifications, expo-device) and call /api/push/register after login; (5) verify the new Phase-2 endpoints (/api/matchmaking, /api/vip, /api/avatars→/cosmetics, /api/guilds, /api/push/register) still work end-to-end."
+
+backend:
+  - task: "Razorpay USE_REAL_RAZORPAY toggle + /payments/razorpay/config endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added USE_REAL_RAZORPAY env flag (default false). Client is initialised only when flag is true AND both keys are present. New GET /api/payments/razorpay/config returns {use_real, key_id, mode}. /payments/razorpay/create-order and /verify already branch on razorpay_client==None for mock path. Please verify: config returns mode=mock, create-order returns mocked=true with deterministic shape, verify grants the shop item, balance increments."
+      - working: true
+        agent: "testing"
+        comment: "All Razorpay mock-mode checks PASS. GET /api/payments/razorpay/config -> {use_real:false, mode:'mock', key_id:'rzp_test_mock'}. POST /api/payments/razorpay/create-order with bcoins item coins_100 -> 200 with mocked=true and order_id 'order_mock_db3d8a1bc220'. POST /api/payments/razorpay/verify with mock signature -> {ok:true, mocked:true}. User bcoins incremented exactly by item.amount (500 -> 600 for coins_100). transactions collection has new razorpay_purchase_mock row referencing item_id and payment_id. coins_3000 top-up flow also verified for downstream guild test (3500 BC). No issues."
+
+  - task: "Push token registration endpoint /api/push/register"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Scaffold only. Accepts user_id/token/platform via query, stores push_token & push_platform on user doc. Please confirm 200 + persistence in users collection."
+      - working: true
+        agent: "testing"
+        comment: "PASS. POST /api/push/register?user_id=...&token=ExponentPushToken[abc123]&platform=expo returns {ok:true}. Subsequent GET /api/user/{user_id} confirms push_token='ExponentPushToken[abc123]' and push_platform='expo' persisted."
+
+  - task: "Phase-2 endpoints: matchmaking, vip, cosmetics/avatars, guilds"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Previously added in prior session, never tested. Need smoke tests: POST /matchmaking/join (classic), GET /matchmaking/status, GET /vip/info/{user_id}, POST /vip/activate, GET /cosmetics/{user_id}, POST /cosmetics/equip, POST /guilds/create, POST /guilds/join, POST /guilds/leave. All should return 200 and mutate DB correctly."
+      - working: true
+        agent: "testing"
+        comment: "All Phase-2 endpoints PASS. Matchmaking: POST /api/matchmaking/join?user_id=... -> 200 with status='queued' and entry_id; GET /api/matchmaking/status/{entry_id} -> 200 with status/wait_seconds/bot_fallback_in fields. Note: matchmaking_join takes only user_id (no mode param) and matchmaking_status uses path param /matchmaking/status/{entry_id} (NOT query ?user_id). Review request mentioned ?user_id -- actual implementation uses entry_id path param; tested using actual signature and it works correctly. VIP: GET /api/vip/info/{user_id} returns plans+perks+active=false initially; POST /api/vip/activate?user_id=...&plan_id=vip_monthly -> 200 ok, expires_at +30d; subsequent GET shows active=true and days_left=29. Cosmetics: GET /api/cosmetics/{user_id} returns frames/titles/backgrounds with equipped state; POST /api/cosmetics/equip?user_id=...&category=titles&item_id=title_newbie -> 200 with equipped.title=title_newbie, persisted in user doc. Guilds: POST /api/guilds/create?user_id=...&name=TestGuild&tag=TG (after top-up to >=1000 BC) -> 200 returns guild with id+code; user.guild_id set. POST /api/guilds/join?user_id=<userC>&code_or_id=<code> -> 200, user_c.guild_id set, guild.members contains both. POST /api/guilds/leave?user_id=<userC> -> {ok:true}, user_c.guild_id cleared. 24/24 assertions passed in /app/backend_test.py."
+
+frontend:
+  - task: "Fix Metro resolve error for src/StateViews (Profile/Streak/BattlePass/Collections blank screens)"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/StateViews.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "StateViews.tsx actually exists. Root cause was stale Metro cache that cached the resolution failure from before the file was created. Cleared /tmp/metro-* haste map and restarted expo — web bundle now builds (HTTP 200). Not calling frontend testing agent per user protocol."
+
+  - task: "Expo push notification scaffold (expo-notifications + registration on home)"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/push.ts"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added expo-notifications + expo-device. New helper src/push.ts requests permission (no-op on web/simulator), fetches Expo token, POSTs to /api/push/register via api.pushRegister. Hooked into (tabs)/index.tsx after loadUser succeeds. Delivery requires a dev/native build."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 3
+  run_ui: false
+
+test_plan:
+  current_focus: []
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Please smoke-test the three backend tasks above. Use existing guest login flow (POST /api/guest/login with a device_id) to get a user_id. Razorpay must be in MOCK mode (confirm via GET /api/payments/razorpay/config -> mode='mock'). For shop purchase test: GET /api/shop/items, pick a bcoins item, POST /payments/razorpay/create-order -> expect mocked=true, then POST /payments/razorpay/verify with any fake payment_id -> expect ok=true and user bcoins incremented. For push: POST /api/push/register?user_id=...&token=ExponentPushToken[xxx]&platform=expo -> expect ok=true and push_token set on user. For Phase-2: exercise matchmaking/join (classic mode), vip/info, cosmetics/equip, guilds/create+join+leave. Do NOT test frontend — user has not approved frontend testing yet."
+  - agent: "testing"
+    message: "Backend smoke tests COMPLETE. 24/24 assertions passed in /app/backend_test.py against the public preview URL. Razorpay mock toggle works end-to-end: config reports mode=mock, create-order returns mocked=true with order_mock_* prefix, verify grants the bcoins item (balance went from 500 -> 600 for coins_100, 500 -> 3500 for coins_3000), and a transaction row of type 'razorpay_purchase_mock' is inserted referencing item_id and payment_id. Push register persists push_token + push_platform on the user doc and returns {ok:true}. Phase-2: matchmaking join/status/cancel all 200 (note: server signature is GET /api/matchmaking/status/{entry_id} with path param, NOT ?user_id query — the review-request example for status is slightly off, but the actual implementation works correctly and the frontend already uses it). VIP info+activate (vip_monthly) toggles active=true with 29 days_left. Cosmetics equip titles=title_newbie persists in user.equipped. Guilds create (1000 BC cost), join via code, member listing, and leave all work and DB state is consistent. No bugs or regressions found. Frontend was NOT tested."

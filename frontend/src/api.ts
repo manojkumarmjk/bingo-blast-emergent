@@ -86,6 +86,8 @@ export const api = {
   // Push
   pushRegister: (userId: string, token: string, platform = 'expo') =>
     request(`/push/register?user_id=${userId}&token=${encodeURIComponent(token)}&platform=${platform}`, { method: 'POST' }),
+  // Razorpay config (toggle between real/mock)
+  razorpayConfig: () => request('/payments/razorpay/config'),
   leaderboard: (period = 'all') => request(`/leaderboard?period=${period}`),
   tournaments: () => request('/tournaments'),
   registerTournament: (userId: string, tournamentId: string) =>

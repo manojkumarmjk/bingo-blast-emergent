@@ -821,15 +821,28 @@ async def shop_items(): return SHOP_ITEMS
 
 
 # ---------------------- Razorpay ----------------------
-RAZORPAY_KEY_ID = os.environ.get("RAZORPAY_KEY_ID", "")
-RAZORPAY_KEY_SECRET = os.environ.get("RAZORPAY_KEY_SECRET", "")
+# Toggle controls whether we call Razorpay's real API or mock the flow locally.
+USE_REAL_RAZORPAY = os.environ.get("USE_REAL_RAZORPAY", "false").strip().lower() in ("true", "1", "yes", "on")
+RAZORPAY_KEY_ID = os.environ.get("RAZORPAY_KEY_ID", "").strip().strip('"')
+RAZORPAY_KEY_SECRET = os.environ.get("RAZORPAY_KEY_SECRET", "").strip().strip('"')
 razorpay_client = None
 try:
-    if RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET:
+    if USE_REAL_RAZORPAY and RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET:
         import razorpay as _rzp
         razorpay_client = _rzp.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
+        logger.info("Razorpay: REAL mode enabled")
+    else:
+        logger.info(f"Razorpay: MOCK mode (USE_REAL_RAZORPAY={USE_REAL_RAZORPAY}, keys_present={bool(RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET)})")
 except Exception as e:
     logger.warning(f"Razorpay init failed: {e}")
+    razorpay_client = None
+
+@api_router.get("/payments/razorpay/config")
+async def razorpay_config():
+    """Lets the frontend know whether to use the real checkout or mock flow."""
+    return {"use_real": razorpay_client is not None,
+            "key_id": RAZORPAY_KEY_ID if razorpay_client is not None else "rzp_test_mock",
+            "mode": "real" if razorpay_client is not None else "mock"}
 
 @api_router.post("/payments/razorpay/create-order")
 async def create_razorpay_order(req: RazorpayOrderRequest):

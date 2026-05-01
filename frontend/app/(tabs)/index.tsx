@@ -8,6 +8,7 @@ import ScreenBg from '../../src/ScreenBg';
 import HeaderBar from '../../src/HeaderBar';
 import { colors, gradients, radius, shadows, spacing, type, media, columnColor, columnLetter } from '../../src/theme';
 import { api, storage } from '../../src/api';
+import { registerPushTokenForUser } from '../../src/push';
 
 export default function Home() {
   const router = useRouter();
@@ -22,6 +23,8 @@ export default function Home() {
       const fresh = await api.getUser(stored.id);
       await storage.setUser(fresh);
       setUser(fresh);
+      // Register Expo push token on first successful load (no-op on web / simulator)
+      registerPushTokenForUser(fresh.id).catch(() => {});
       if (fresh.last_daily_claim) {
         const last = new Date(fresh.last_daily_claim).getTime();
         setDailyClaimable(Date.now() - last > 20 * 3600 * 1000);
