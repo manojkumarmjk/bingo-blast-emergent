@@ -1,46 +1,44 @@
 # Bingo Blast - Product Requirements Document
 
 ## Overview
-**Bingo Blast** is a premium, multiplayer Bingo mobile gaming app built with Expo (React Native) + FastAPI + MongoDB. It delivers a colorful casino-style gaming experience with playful bingo energy targeted at casual Indian mobile users.
+**Bingo Blast** is a premium, addictive multiplayer Bingo mobile game built with Expo (React Native) + FastAPI + MongoDB. Designed for the Indian casual gaming market with ₹ pricing via Razorpay.
 
-## Core Features (Phase 1)
-1. **Guest Onboarding Flow** — Splash → 3-step onboarding → Login → Home (no mandatory signup)
-2. **Full Bingo Game Engine**
-   - 5x5 Bingo card with B(1-15), I(16-30), N(31-45), G(46-60), O(61-75) columns
-   - FREE center cell
-   - Win detection: rows, columns, both diagonals
-   - Invalid claim penalty
-3. **Three Game Modes**
-   - Computer Mode (vs bot with easy/medium/hard difficulty)
-   - Online Multiplayer (real-time WebSocket rooms, auto number caller every 3s)
-   - Room Tiers: Free, Prestige (₹25), Luxury (₹150), Custom, Tournament
-4. **Bcoin Economy** — Starter 500 Bcoins, daily reward (50-200), spin wheel (25 BC → 1000 BC jackpot), match wins, room entry fees
-5. **Razorpay Integration** (scaffolded, works with mock mode without keys)
-6. **Social** — Friends by code, invite to rooms, quick emotes/chat in-game
-7. **Leaderboards** — Daily/Weekly/Monthly/All-time with Top-3 podium & sticky user rank
-8. **Tournaments** — Ongoing + Upcoming with prize pools, countdowns, registration
-9. **Achievements** — 6 badges with progress tracking & Bcoin rewards on unlock
-10. **All 23 screens** as per brief with data-testids
+## Core Loop (Phase A — transforms passive to active)
+- **Manual dabbing** — players tap cells when numbers are called. Tap an uncalled number → red flash, no mark.
+- **Speed bonus** — dab within 1.5s of call → +2 XP "QUICK!" floating text
+- **Multi-card play** — default 2 cards in Computer mode (up to 4), horizontal swipe between cards
+- **3 Power-ups** — Dauber (auto-mark next 3), Reveal (peek next 3 numbers), 2x (double reward)
+- **Near-bingo glow** — card header shows "1 away on 2 lines!" / "BINGO READY!" when close
+- **How-to-play overlay** — shown on first game launch, dismissible
+- **Anti-cheat** — server rejects claims with uncalled dabs or incomplete lines
 
-## Design System
-- Archetype: "Vibrant Play × Premium Casino" (Dark theme)
-- Primary: Magenta #F72585, Secondary: Cyan #4CC9F0, Accent: Gold #FFD166
-- Bingo column colors: B=#FF3366, I=#FFD166, N=#06D6A0, G=#4CC9F0, O=#9D4EDD
-- Nunito-style bold headings, rounded 24px cards, glow shadows on CTAs
-- @expo/vector-icons (NO emojis)
-- react-native-reanimated for animations, expo-linear-gradient for gradients
+## Retention (Phase B — daily hooks)
+- **Daily Missions** — 3 randomly selected per day from 10 templates (Win 2, Dab 50, Speed 10, etc.), +60–300 BC
+- **7-day Streak Calendar** — escalating rewards [50, 75, 100, 150, 200, 300, 500] BC; resets after 40h gap
+- **Collection System** — 12-ball "Neon Nights" set (Common/Rare/Epic), drop from Spin Wheel + Battle Pass; complete set = 2000 BC
+
+## Monetization & Meta (Phase C)
+- **Battle Pass** — 50 tiers/season (28 days), free + premium tracks (₹299); XP earned from play/daily rewards
+- **Live Events** — Power Hour (19-20 UTC weekdays) & Weekend Blast with 2x multipliers
+- **Razorpay** — integrated with mock fallback mode for Bcoin packs (₹25–₹449) and Premium Pass
+
+## Screens (23 original + 4 engagement)
+Splash, Onboarding (3), Login, Home Dashboard, Game Modes, Lobby, Create Room, Invite Friends, Waiting Room, Bingo Game, Number Called Overlay, Win, Shop, Wallet, Spin Wheel, Leaderboard, Tournament, Profile, Achievements, Friends, Chat Overlay, Settings, Error States + **Missions, Battle Pass, Collections, Streak Calendar**
 
 ## Tech Stack
-- **Frontend**: Expo Router file-based routing, React Native 0.81, Reanimated, AsyncStorage
-- **Backend**: FastAPI + Motor (async MongoDB) + native WebSockets + Razorpay SDK
-- **DB**: MongoDB collections — users, rooms, matches, transactions
+- **Frontend**: Expo Router, React Native 0.81, Reanimated, AsyncStorage, expo-linear-gradient
+- **Backend**: FastAPI + Motor + native WebSockets + Razorpay SDK
+- **DB**: MongoDB — users (with engagement fields: streak_days, bp_xp, missions, collection, powerups, stats), rooms, matches, transactions
 
-## Bottom Navigation
-Home • Rooms • Shop • Leaderboard • Profile
+## Test coverage
+- Iteration 1: 27/27 pass (core 23-screen flow)
+- Iteration 2: 45/45 pass (engagement Phase A+B+C)
 
-## Phase 2 (Future)
-- Email/Google OAuth authentication
+## Phase 2+ (Future)
+- Email / Google OAuth
 - LAN multiplayer
-- Push notifications
+- Push notifications (FOMO, friend activity, event starts)
+- Guilds/Clubs with weekly club leaderboards
+- Avatar frames & titles
+- VIP subscription
 - Tournament bracket engine
-- Friend challenges + spectator mode
